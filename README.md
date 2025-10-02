@@ -1,4 +1,4 @@
-#API de Produtos com JWT
+# API de Produtos com JWT
 
 Esta é uma API RESTful em .NET 8 que gerencia produtos, com autenticação baseada em JWT (JSON Web Token), documentação Swagger e banco de dados em memória.
 
@@ -16,7 +16,7 @@ Registro de logs no console
 
 Banco de dados em memória para persistência temporária
 
-#Tecnologias
+# Tecnologias
 
 .NET 8 / ASP.NET Core
 
