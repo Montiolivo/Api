@@ -11,28 +11,52 @@ namespace Api.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
+        private readonly IConfiguration _config;
+
+        public AuthController(IConfiguration config)
+        {
+            _config = config;
+        }
 
         [HttpPost("login")]
-        public IActionResult Login(string username)
+        public IActionResult Login([FromBody] LoginRequest login)
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("cf8u08mLNqJMizGWMR368Atts6BNA7HMD7JHnpxNhnyX67cT1kQZ5N");
-            var tokenDescriptor = new SecurityTokenDescriptor
+
+            if (login.Username != "admin" || login.Password != "123456")
+                return Unauthorized("Usuário ou senha inválidos");
+
+            var claims = new[]
             {
-                Subject = new ClaimsIdentity(new[] {
-                new Claim(ClaimTypes.Name, username)
-            }),
-                Expires = DateTime.UtcNow.AddMinutes(60),
-                Issuer = "MinhaApi",
-                Audience = "Admin",
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature)
+                new Claim(ClaimTypes.Name, login.Username),
+                new Claim(ClaimTypes.Role, "Admin")
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            return Ok(new LoginResponse { Token = tokenHandler.WriteToken(token) });
+            var token = new JwtSecurityToken(
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(1),
+                signingCredentials: creds
+            );
+
+            return Ok(new LoginResponse
+            {
+                Token = new JwtSecurityTokenHandler().WriteToken(token)
+            });
         }
+    }
+
+    public class LoginRequest
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
+    }
+
+    public class LoginResponse
+    {
+        public string Token { get; set; }
     }
 }
